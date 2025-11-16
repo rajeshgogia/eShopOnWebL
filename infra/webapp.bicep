@@ -1,13 +1,10 @@
-param webAppName string = uniqueString(resourceGroup().id) // Generate a unique string for the web app name
-param sku string = 'F1' // Tier of the App Service plan
-param linuxFxVersion string = 'node|20-lts' // Runtime stack of the web app
-param location string = resourceGroup().location // Location for all resources
-param repositoryUrl string = 'https://github.com/Azure-Samples/nodejs-docs-hello-world'
-param branch string = 'main'
-var appServicePlanName = toLower('AppServicePlan-${webAppName}')
-var webSiteName = toLower('wapp-${webAppName}')
+param webAppName string = uniqueString(resourceGroup().id) // Generate unique String for web app name
+param sku string = 'S1' // The SKU of App Service Plan
+param location string = resourceGroup().location
 
-resource appServicePlan 'Microsoft.Web/serverfarms@2023-12-01' = {
+var appServicePlanName = toLower('AppServicePlan-${webAppName}')
+
+resource appServicePlan 'Microsoft.Web/serverfarms@2022-09-01' = {
   name: appServicePlanName
   location: location
   properties: {
@@ -16,26 +13,25 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2023-12-01' = {
   sku: {
     name: sku
   }
-  kind: 'linux'
 }
-
-resource appService 'Microsoft.Web/sites@2023-12-01' = {
-  name: webSiteName
+resource appService 'Microsoft.Web/sites@2022-09-01' = {
+  name: webAppName
+  kind: 'app'
   location: location
   properties: {
     serverFarmId: appServicePlan.id
     siteConfig: {
-      linuxFxVersion: linuxFxVersion
+      linuxFxVersion: 'DOTNETCORE|8.0'
+      appSettings: [
+        {
+          name: 'ASPNETCORE_ENVIRONMENT'
+          value: 'Development'
+        }
+        {
+          name: 'UseOnlyInMemoryDatabase'
+          value: 'true'
+        }
+      ]
     }
-  }
-}
-
-resource srcControls 'Microsoft.Web/sites/sourcecontrols@2023-12-01' = {
-  parent: appService
-  name: 'web'
-  properties: {
-    repoUrl: repositoryUrl
-    branch: branch
-    isManualIntegration: true
   }
 }
